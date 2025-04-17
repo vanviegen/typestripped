@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TypeStript browser CDN example</title>
+    <!-- <script src="https://unpkg.com/typestripped/browser"></script> -->
+    <script type="module" src="../dist/browser.js"></script>
+</head>
+<body>
+    <h2 id="act1">This is an inline TypeScript &ltscript&gt:</h2>
+    <script type="text/typescript">
+      interface User {
+        name: string;
+        age: number;
+      }
+      function greet(user: User): string {
+        let h4: Element = document.createElement('h4');
+        h4.innerText = `<h4>Hello, ${user.name}!</h4>`;
+        document.getElementById('act1').after(h4);
+      }
+      greet({name: "Frank", age: "44" as number});
+    </script>
+
+    <hr>
+    <h2>This inline code is even importing a whole TypeScript library:</h2>
+    <script type="text/typescript">
+      import {$, proxy} from "./aberdeen.ts";
+      let num = proxy(0 as number);
+      $('button:+', {click: () => num.value++});
+      $('input', {bind: num})
+      $('button:-', {click: () => num.value--})
+    </script>
+
+    <hr>
+    <h2>Check the page source if you don't believe me! :-)</h2>
+</body>
+</html>

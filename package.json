@@ -1,0 +1,56 @@
+{
+    "name": "typestripped",
+    "version": "0.1.0",
+    "description": "Tiny (3kb gzipped), dependency-free library that converts (most) TypeScript to JavaScript in the browser.",
+    "main": "dist-min/typestripped.js",
+    "files": [
+        "bin",
+        "dist",
+        "dist-min",
+        "src"
+    ],
+    "exports": {
+        ".": {
+            "default": "./dist-min/typestripped.js",
+            "development": "./dist/typestripped.js",
+            "types`": "./dist/typestripped.d.ts"
+        },
+        "./browser": {
+            "default": "./dist-min/browser.js",
+            "development": "./dist/browser.js",
+            "types`": "./dist/browser.d.ts"
+        },
+        "./package.json": "./package.json"
+    },
+    
+    "scripts": {
+        "build": "rm -rf dist dist-min ; tsc --target es2020 --declaration --sourceMap --outDir dist src/*.ts && mkdir -p dist-min && for f in dist/*.js; do terser --module -m --mangle-props -o dist-min/$(basename $f) --source-map -- $f; done && cp dist/*.d.ts dist-min",
+        "prepack": "npm run build"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/vanviegen/typestripped.git"
+    },
+    "bin": "bin/cli.js",
+    "keywords": [
+        "typescript",
+        "javascript",
+        "transpile",
+        "convert",
+        "browser",
+        "ts2js",
+        "strip"
+    ],
+    "author": "Frank van Viegen",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/vanviegen/typestripped/issues"
+    },
+    "homepage": "https://github.com/vanviegen/typestripped#readme",
+    "devDependencies": {
+        "terser": "^5.39.0",
+        "typescript": "^5.8.3"
+    },
+    "type": "module",
+    "types": "dist-min/aberdeen.d.ts"    
+}
