@@ -1,4 +1,4 @@
-import { ReverseSortedSet } from "./helpers/reverseSortedSet.ts";
+import { ReverseSortedSet } from "./reverseSortedSet.ts";
 
 /*
 * QueueRunner

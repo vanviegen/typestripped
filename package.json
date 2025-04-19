@@ -1,7 +1,7 @@
 {
     "name": "typestripped",
-    "version": "0.1.0",
-    "description": "Tiny (3kb gzipped), dependency-free library that converts (most) TypeScript to JavaScript in the browser.",
+    "version": "0.1.4",
+    "description": "Tiny, dependency-free library that transpiles (most) TypeScript to JavaScript in the browser.",
     "main": "dist-min/typestripped.js",
     "files": [
         "bin",
@@ -24,7 +24,7 @@
     },
     
     "scripts": {
-        "build": "rm -rf dist dist-min ; tsc --target es2020 --declaration --sourceMap --outDir dist src/*.ts && mkdir -p dist-min && for f in dist/*.js; do terser --module -m --mangle-props -o dist-min/$(basename $f) --source-map -- $f; done && cp dist/*.d.ts dist-min",
+        "build": "rm -rf dist dist-min ; tsc --target es2020 --declaration --sourceMap --outDir dist src/*.ts && mkdir -p dist-min && for f in dist/*.js; do terser --module -m module --source-map -o dist-min/$(basename $f) -- $f; done && cp dist/*.d.ts dist-min",
         "prepack": "npm run build"
     },
     "repository": {

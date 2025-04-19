@@ -6,22 +6,24 @@ function descr(regexp, string) {
 }
 const 
 // Atoms
-WHITESPACE = descr(/(\s|\/\/.*|\/\*[\s\S]*?\*\/)+/y, "whitespace"), IDENTIFIER = descr(/[a-zA-Z_$][0-9a-zA-Z_$]*/y, "identifier"), STRING = descr(/(['"])(?:(?=(\\?))\2.)*?\1/y, "string"), NUMBER = descr(/[+-]?\d+(\.\d+)?([eE][+-]?\d+)?/y, "number"), OPERATOR = descr(/instanceof\b|in\b|[!=]==|\|\|=?|&&=?|[+\-*\/%&|^!=<>]=|[+\-*\/%&|^=<>]/y, "bin-op"), BACKTICK_STRING = descr(/[\s\S]*?(\${|`)/y, "`string`"), EXPRESSION_PREFIX = descr(/\+\+|--|!|~|\+|-|typeof\b|delete\b|await\b/y, "pre-op"), REGEXP = descr(/\/(\\.|[^\/])+\/[gimsuyd]*/y, "regexp"), 
+WHITESPACE = descr(/(\s|\/\/.*|\/\*[\s\S]*?\*\/)+/y, "whitespace"), IDENTIFIER = descr(/[a-zA-Z_$][0-9a-zA-Z_$]*/y, "identifier"), STRING = descr(/(['"])(?:(?=(\\?))\2.)*?\1/y, "string"), NUMBER = descr(/[+-]?(?:0[xX][0-9a-fA-F]+|0[oO][0-7]+|0[bB][01]+|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/y, "number"), OPERATOR = descr(/instanceof\b|in\b|[!=]==|\|\|=?|>>=?|<<=?|&&=?|[+\-*\/%&|^!=<>]=|[+\-*\/%&|^=<>]/y, "bin-op"), BACKTICK_STRING = descr(/[\s\S]*?(\${|`)/y, "`string`"), EXPRESSION_PREFIX = descr(/\+\+|--|!|~|\+|-|typeof\b|delete\b|await\b/y, "unary-op"), REGEXP = descr(/\/(\\.|[^\/])+\/[gimsuyd]*/y, "regexp"), 
 // Other regexes
 ANYTHING = /[\s\S]/y, ALL_NOT_WHITESPACE = /\S/g, ALPHA_NUM = /^[a-zA-Z0-9]+$/;
 /**
  * Transpiles TypeScript to JavaScript.
  *
  * Don't trust your production code with this. It takes some shortcuts, and I haven't looked at any standards documents to write this.
- * It's intended as a lightweigth means for transpiling live example code in the browser.
+ * It's intended as a lightweight means for transpiling live example code in the browser and for other quick demo's and experiments.
  *
  * @param code The input TypeScript.
- * @param debug When `true`, each consumed token is logged to stdout. If it's a function, the same is logged to the function.
- * @param recover When `true`, the function will attempt to continue transpilation when it encounters an error in the input (or unsupported syntax), instead of throwing. Errors are logged to `console.error`.
+ * @param options An optional object containing the following optional properties:
+ *   - `debug` When `true`, each consumed token is logged to stdout. If it's a function, the same is logged to the function.
+ *   - `recover` When `true`, the function will attempt to continue transpilation when it encounters an error in the input (or unsupported syntax), instead of throwing. Errors are logged to `console.error`.
+ *   - `transformImport` An async function that gets an `import` URI, and returns the URI to be include included in the transpiled output.
  * @returns The output JavaScript, if all went well.
  * @throws ParserError, if something went wrong.
  */
-export function typestripped(code, debug = false, recover = false) {
+export function typestripped(code, { debug, recover, transformImport } = {}) {
     let pos = 0; // Current char in `code`
     let line = 1; // Line number for `pos`
     let col = 1; // Column for `pos`
@@ -130,7 +132,8 @@ export function typestripped(code, debug = false, recover = false) {
     }
     function parseReturn() {
         // return 123;
-        if (!eat('return'))
+        // yield 234;
+        if (!eat('return') && !eat('yield'))
             return false;
         parseExpression();
         mustEos();
@@ -238,7 +241,13 @@ export function typestripped(code, debug = false, recover = false) {
             must(eat('}'));
         }
         must(eat('from'));
+        let stringStart = out.length;
         must(eat(STRING));
+        if (transformImport) {
+            let url = out.substring(stringStart + 1, out.length - 1);
+            url = transformImport(url);
+            replaceOutput(stringStart, '"' + url + '"');
+        }
         mustEos();
         return true;
     }
@@ -307,7 +316,7 @@ export function typestripped(code, debug = false, recover = false) {
             }
             else if (!eat(IDENTIFIER))
                 break;
-            eat('?');
+            skip('?');
             if (skip(':'))
                 must(skip(parseType));
             if (eat('='))
@@ -455,6 +464,7 @@ export function typestripped(code, debug = false, recover = false) {
             if (eat('...'))
                 must(parseExpression);
             else {
+                eat('*'); // generator support
                 if (eat('[')) {
                     must(parseExpression);
                     must(eat(']'));
@@ -626,19 +636,26 @@ export function typestripped(code, debug = false, recover = false) {
         isAbstract || (isAbstract = !!skip('abstract'));
         skip('public') || skip('private') || skip('protected');
         isAbstract || (isAbstract = !!skip('abstract'));
-        eat('get') || eat('set');
+        (peek('get', IDENTIFIER) && eat('get')) || (peek('set', IDENTIFIER) && eat('set'));
         if (eat('static')) {
             if (parseBlock())
                 return true;
         }
         eat('async');
+        eat('*'); // generator support
         const name = eat(IDENTIFIER);
         if (!name) {
-            if (out.length !== statementOutStart) {
-                // We've already consumed some modifiers.. identifier was a must.
-                must(false);
+            if (eat('[')) {
+                must(parseExpression);
+                must(eat(']'));
             }
-            return false;
+            else {
+                if (out.length !== statementOutStart) {
+                    // We've already consumed some modifiers.. identifier was a must.
+                    must(false);
+                }
+                return false;
+            }
         }
         if (!peek('<') && !peek('(')) {
             // It's an attribute

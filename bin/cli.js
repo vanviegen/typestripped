@@ -40,7 +40,7 @@ outputFile ||= path.join(
 try {
   fs.writeFileSync(
     outputFile, 
-    typestripped(fs.readFileSync(inputFile, 'utf8'), debug, recover)
+    typestripped(fs.readFileSync(inputFile, 'utf8'), {debug, recover})
   );
   console.log(`Converted ${inputFile} to ${outputFile}`);
 } catch (e) {

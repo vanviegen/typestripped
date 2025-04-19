@@ -1,7 +1,34 @@
 import {typestripped} from "./typestripped.js";
 
+let transformCache: Record<string,string> = {};
+
+function transformImport(url: string): string {
+    // Do we need to translate?
+    if (url.slice(-3)==='.js') return url;
+
+    const absoluteUrl = new URL(url, location.href).toString();
+    let objectUrl = transformCache[absoluteUrl];
+    if (!objectUrl) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', absoluteUrl, false); // false for synchronous request
+        xhr.send(null);
+        
+        if (xhr.status !== 200) {
+            throw new Error(`HTTP error! status: ${xhr.status} for ${absoluteUrl}`);
+        }
+        
+        const ts = xhr.responseText;
+        const js = typestripped(ts, {recover: true, transformImport}) + "\n//# sourceURL=" + url;
+        const blob = new Blob([js], { type: 'application/javascript' });
+        objectUrl = URL.createObjectURL(blob);
+        transformCache[absoluteUrl] = objectUrl;
+    }
+    console.log(`typestripped browser transformed import`, absoluteUrl, objectUrl);
+    return objectUrl;
+}
+
 export async function transpile(tsE: Element): Promise<void> {
-    let tsCode: string;
+    let ts: string;
     
     // Check if there's a src attribute
     const src = tsE.getAttribute('src');
@@ -11,15 +38,17 @@ export async function transpile(tsE: Element): Promise<void> {
         if (!response.ok) {
             throw new Error(`Failed to fetch ${src}: ${response.status} ${response.statusText}`);
         }
-        tsCode = await response.text();
+        ts = await response.text();
     } else {
         // Use inline code
-        tsCode = tsE.textContent || '';
+        ts = tsE.textContent || '';
     }
     
     // Convert TypeScript to JavaScript
     const jsE = document.createElement('script');
-    jsE.textContent = typestripped(tsCode, false, true); // Enable error recovery
+    let js = typestripped(ts, {recover: true, transformImport});
+    if (src) js += "\n//# sourceURL=" + src;
+    jsE.textContent = js;
     jsE.setAttribute('type', 'module');
             
     // Replace the TypeScript script with the JavaScript one
