@@ -1,10 +1,11 @@
 import { typestripped } from "./typestripped.js";
 let transformCache = {};
+let baseUrl = location.href;
 function transformImport(url) {
     // Do we need to translate?
     if (url.slice(-3) === '.js')
         return url;
-    const absoluteUrl = new URL(url, location.href).toString();
+    const absoluteUrl = new URL(url, baseUrl).toString();
     let objectUrl = transformCache[absoluteUrl];
     if (!objectUrl) {
         const xhr = new XMLHttpRequest();
@@ -14,7 +15,10 @@ function transformImport(url) {
             throw new Error(`HTTP error! status: ${xhr.status} for ${absoluteUrl}`);
         }
         const ts = xhr.responseText;
-        const js = typestripped(ts, { recover: true, transformImport }) + "\n//# sourceURL=" + url;
+        let oldBaseUrl = baseUrl;
+        baseUrl = absoluteUrl;
+        const js = typestripped(ts, { recover: true, transformImport }) + "\n//# sourceURL=" + absoluteUrl;
+        baseUrl = oldBaseUrl;
         const blob = new Blob([js], { type: 'application/javascript' });
         objectUrl = URL.createObjectURL(blob);
         transformCache[absoluteUrl] = objectUrl;
@@ -25,8 +29,9 @@ function transformImport(url) {
 export async function transpile(tsE) {
     let ts;
     // Check if there's a src attribute
-    const src = tsE.getAttribute('src');
+    let src = tsE.getAttribute('src');
     if (src) {
+        src = new URL(src, baseUrl).toString();
         // Fetch the TypeScript file
         const response = await fetch(src);
         if (!response.ok) {
