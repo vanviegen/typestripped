@@ -460,7 +460,7 @@ export function typestripped(code: string, {debug,recover,transformImport}: Opti
                     must(eat(']'));
                 }
                 else {
-                    if (!eat(IDENTIFIER) && !eat(NUMBER)) break;
+                    if (!eat(IDENTIFIER) && !eat(NUMBER) && !eat(STRING) && !parseBacktickString) break;
                 }
                 if ((parseTemplateDef() && must(parseFuncParams())) || parseFuncParams()) {
                     // it's a function shortcut
@@ -522,8 +522,9 @@ export function typestripped(code: string, {debug,recover,transformImport}: Opti
                     must(parseType);
                     must(eat(']'))
                 }
-                else if (!eat(IDENTIFIER)) break;
-                if (eat(':')) must(parseType);
+                else if (!eat(IDENTIFIER) && !eat(NUMBER) && !eat(STRING)) break;
+                must(eat(':'));
+                must(parseType);
                 if (!eat(',')) break;
             }
             must(eat('}'));

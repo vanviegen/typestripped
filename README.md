@@ -4,18 +4,18 @@ Tiny, dependency-free library that transpiles (most) TypeScript to JavaScript in
 
 ## Features
 
-TypeStripped is a lightweight TypeScript transpiler designed for in-browser use. It allows for `<script type="text/typescript">`! It's perfect for live code examples, demos, quick experiments, those not wanting to setup a transpilation toolchain, converting TypeScript to JavaScript on the fly.
+TypeStripped is a lightweight TypeScript transpiler designed for in-browser use. It allows for `<script type="text/typescript">`! It's perfect for live code examples, demos, quick experiments and toolchain-free development.
 
 - **Tiny footprint**: Less than 4kb gzipped.
 - **Zero dependencies**: Works standalone in any browser.
-- **Replaces type info with whitespace**: Simplify debugging, as line and column are left unchanged.
+- **Replaces type info with whitespace**: Simplifies debugging, as line and column are (mostly) left unchanged.
 - **Transpiles `import`s**: ES6 import other `.ts` files from your TypeScript.
 - **Simple API**: A function that takes TypeScript and returns JavaScript.
 - **Error recovery**: Can continue transpilation when encountering errors.
 
 ## Warning
 
-Do not trust your production code with this! It takes some shortcuts, and I haven't looked at any standards documents to write this. There are probably quite a few esoteric TypeScript/JavaScript features that this library doesn't handle (well).
+Do not trust your production code with this! The TypeScript parser takes some shortcuts, and I haven't looked at any standards documents to write it. There are probably quite a few esoteric TypeScript/JavaScript features that this library doesn't handle (well).
 
 ## Usage
 

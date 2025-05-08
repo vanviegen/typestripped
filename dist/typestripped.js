@@ -470,7 +470,7 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
                     must(eat(']'));
                 }
                 else {
-                    if (!eat(IDENTIFIER) && !eat(NUMBER))
+                    if (!eat(IDENTIFIER) && !eat(NUMBER) && !eat(STRING) && !parseBacktickString)
                         break;
                 }
                 if ((parseTemplateDef() && must(parseFuncParams())) || parseFuncParams()) {
@@ -540,10 +540,10 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
                     must(parseType);
                     must(eat(']'));
                 }
-                else if (!eat(IDENTIFIER))
+                else if (!eat(IDENTIFIER) && !eat(NUMBER) && !eat(STRING))
                     break;
-                if (eat(':'))
-                    must(parseType);
+                must(eat(':'));
+                must(parseType);
                 if (!eat(','))
                     break;
             }
