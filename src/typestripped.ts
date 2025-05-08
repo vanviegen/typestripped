@@ -60,8 +60,7 @@ export function typestripped(code: string, {debug,recover,transformImport}: Opti
 
     function parseMain() {
         eat(WHITESPACE);
-        while(recoverErrors(parseStatement, true)) {}
-        if (pos < code.length) must(false);
+        while(pos < code.length) must(recoverErrors(parseStatement, true));
     }
 
     function parseStatement() {
@@ -289,7 +288,7 @@ export function typestripped(code: string, {debug,recover,transformImport}: Opti
     function parseBlock() {
         // { x=3; log(x); }
         if (!eat('{')) return false;
-        while(!eat('}')) recoverErrors(parseStatement, true);
+        while(!eat('}')) must(recoverErrors(parseStatement, true));
         return true;
     }
 

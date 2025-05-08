@@ -39,9 +39,8 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
     ///// Recursive decent parser functions /////
     function parseMain() {
         eat(WHITESPACE);
-        while (recoverErrors(parseStatement, true)) { }
-        if (pos < code.length)
-            must(false);
+        while (pos < code.length)
+            must(recoverErrors(parseStatement, true));
     }
     function parseStatement() {
         // if (a==3) throw new Error();
