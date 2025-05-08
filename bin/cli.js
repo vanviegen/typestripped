@@ -42,7 +42,6 @@ try {
     outputFile, 
     typestripped(fs.readFileSync(inputFile, 'utf8'), {debug, recover})
   );
-  console.log(`Converted ${inputFile} to ${outputFile}`);
 } catch (e) {
   console.error(e);
   process.exit(1);

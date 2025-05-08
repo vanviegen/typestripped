@@ -113,3 +113,11 @@ switch (day) {
         console.log("It is a Tuesday.");
         break;
 }
+
+// templated args:
+templatedFunc     ;
+templatedFunc     ();
+(3+4)            (x)   ();
+
+// two comparisons:
+(3 + 4) < test | sdf > x;

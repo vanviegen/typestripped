@@ -5,6 +5,8 @@ for(x=0;x<4) {
     log("okay" as string);
 }
 
+}
+
 class X<T> extends Array<T> {
     export let i = 4;
     lala(test: number): number {
@@ -13,10 +15,13 @@ class X<T> extends Array<T> {
         let z: string = "c"
     }
 
-    3+4
+    xx(a: number)() {};
 
-    xx(a: number)() {}
+    {{
 
     another(a: number) []
+
+    3+4 4
+
     abstract sdf(): void;
 }

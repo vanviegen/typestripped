@@ -25,7 +25,8 @@
     
     "scripts": {
         "build": "rm -rf dist dist-min ; tsc --target es2020 --declaration --sourceMap --outDir dist src/*.ts && mkdir -p dist-min && for f in dist/*.js; do terser --module -m module --source-map -o dist-min/$(basename $f) -- $f; done && cp dist/*.d.ts dist-min",
-        "prepack": "npm run build"
+        "test": "for a in tests/*.ts ; do echo $a ; ./bin/cli.js \"$a\" --recover --output /dev/stdout 2> /dev/null | diff -u \"${a%.ts}.js\" - || exit 1 ; done && echo OK",
+        "prepack": "npm run build && npm run test"
     },
     "repository": {
         "type": "git",
