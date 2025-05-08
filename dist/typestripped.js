@@ -39,7 +39,7 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
     ///// Recursive decent parser functions /////
     function parseMain() {
         eat(WHITESPACE);
-        while (recoverErrors(parseStatement)) { }
+        while (recoverErrors(parseStatement, true)) { }
         if (pos < code.length)
             must(false);
     }
@@ -76,7 +76,7 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
         if (!eat('let') && !eat('const') && !eat('var'))
             return false;
         if (peek('enum')) {
-            console.info("Const enums are not supported");
+            console.error("Const enums are not supported");
             return parseEnum();
         }
         while (true) {
@@ -282,8 +282,8 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
         // { x=3; log(x); }
         if (!eat('{'))
             return false;
-        while (recoverErrors(parseStatement)) { }
-        must(eat('}'));
+        while (!eat('}'))
+            recoverErrors(parseStatement, true);
         return true;
     }
     function parseTemplateDef() {
@@ -378,27 +378,19 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
             must(parseExpression);
         return true;
     }
-    function parseExpression(allowTemplate = false) {
+    function parseExpression() {
         // (3+4+test()) / c!.cnt++ as any
         let required = false;
         while (eat(EXPRESSION_PREFIX))
             required = true;
-        if (eat('new')) {
-            allowTemplate = true;
+        if (eat('new'))
             required = true;
-        }
         // IDENTIFIER also covers things like `break` and `continue`
         if (eat(STRING) || parseBacktickString() || eat(NUMBER) || parseClass() || parseFunction() || parseArrowFunction() || parseSequence() || eat(IDENTIFIER) || parseLiteralArray() || parseLiteralObject() || eat(REGEXP)) { }
         else {
             if (required)
                 must(false);
             return false;
-        }
-        if (allowTemplate && skip('<')) {
-            must(skip(parseType));
-            while (skip(','))
-                must(skip(parseType));
-            must(skip('>'));
         }
         while (true) {
             if (peek('('))
@@ -412,6 +404,7 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
                 must(eat(IDENTIFIER) || parseIndex());
             else if (eat('.'))
                 must(eat(IDENTIFIER));
+            else if (peek('<') && parseTemplateArg()) { }
             else if (eat(OPERATOR)) {
                 must(parseExpression);
                 return true;
@@ -491,6 +484,26 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
         }
         must(eat('}'));
         return true;
+    }
+    function parseTemplateArg() {
+        // <T,A>
+        // What's hard here is making the distinction between a template argument and < comparison.
+        // (3+4)<test | sdf>(x); // template type
+        // (3+4)<test | sdf>x; // comparison
+        return attempt(() => {
+            if (!skip('<'))
+                return false;
+            must(skip(parseType));
+            while (skip(','))
+                must(skip(parseType));
+            must(skip('>'));
+            // Look ahead to see if we have a template argument or a comparison
+            if (peek('.') || peek('(') || peek('{') || peek(';') || pos >= code.length)
+                return true;
+            // Based on the next token, this doesn't look like a template argument.
+            // Comparisons perhaps then?
+            return false;
+        });
     }
     function parseCall() {
         // myFunc(a, ...rest)
@@ -613,14 +626,13 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
         }
         eat(IDENTIFIER);
         parseTemplateDef();
-        if (eat('extends')) {
-            must(parseExpression(true));
-        }
+        if (eat('extends'))
+            must(parseExpression());
         while (skip('implements'))
             must(skip(parseType));
         must(eat('{'));
         while (!eat('}')) {
-            must(eat(';') || recoverErrors(() => parseMethod(isInterface)));
+            must(eat(';') || recoverErrors(() => parseMethod(isInterface), true));
         }
         if (isInterface)
             skipping--;
@@ -738,29 +750,32 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
             else
                 expect.push(m);
         }
-        let error = new ParseError(`Could not parse ${m[1]} at ${line}:${col}, got ${toJson(code.substr(pos, 8))}[..], expected one of:   ${joinTokens(expect, '   ')}`);
+        let error = new ParseError(`Could not parse ${m[1]} at ${line}:${col}, got ${toJson(code.substr(pos, 24))}, expected one of:   ${joinTokens(expect, '   ')}`);
         if (attempts.length)
             error.attempts = attempts;
         throw error;
     }
-    function recoverErrors(func) {
+    function recoverErrors(func, required = false) {
         if (attempting || !recover)
             return func();
         let startPos = pos;
         try {
-            return func();
+            const res = func();
+            if (required && startPos === pos)
+                must(false);
+            return res;
         }
         catch (e) {
             if (!(e instanceof ParseError))
                 throw e;
             console.error(e);
-            console.info('Trying to recover...');
+            console.error('Attempting to recover...');
             while (pos < code.length && !eat(';') && !eat('}')) {
                 must(eat(WHITESPACE) || eat(IDENTIFIER) || eat(STRING) || eat(ANYTHING));
                 if (postNewline)
                     break;
             }
-            // We fake succes if at least *something* was read.
+            // We fake success if at least *something* was read.
             return (pos > startPos);
         }
     }
@@ -880,9 +895,12 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
             out += matched;
         return result;
     }
-    function debugLog(...args) {
+    function getParseStack() {
         let m = Array(...((new Error().stack || '').matchAll(/\bat parse([A-Z][a-zA-Z]+).*?(:\d+)/g) || [])).map(i => i[1] + i[2]);
-        (typeof debug === 'function' ? debug : console.debug)(line + ':' + col, ...args, "parsing", m.join(' <- '));
+        return m.join(' <- ');
+    }
+    function debugLog(...args) {
+        (typeof debug === 'function' ? debug : console.debug)(line + ':' + col, ...args, "parsing", getParseStack());
     }
 }
 function toJson(v) {
