@@ -1,6 +1,6 @@
 {
     "name": "typestripped",
-    "version": "0.1.10",
+    "version": "0.1.11",
     "description": "Tiny, dependency-free library that transpiles (most) TypeScript to JavaScript in the browser.",
     "main": "dist-min/typestripped.js",
     "files": [

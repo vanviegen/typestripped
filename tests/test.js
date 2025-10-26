@@ -121,3 +121,7 @@ templatedFunc     ();
 
 // two comparisons:
 (3 + 4) < test | sdf > x;
+
+test`string ${text          } ${3          }`;
+
+test`string`(text          );

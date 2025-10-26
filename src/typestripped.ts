@@ -391,6 +391,7 @@ export function typestripped(code: string, {debug,recover,transformImport}: Opti
 
         while(true) {
             if (peek('(')) parseCall();
+            else if (peek('`')) parseBacktickString(); // template function call
             else if (peek('[')) parseIndex();
             else if (eat('++') || eat('--')) {}
             else if (skip('as')) must(skip(parseType));

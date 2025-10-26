@@ -282,7 +282,7 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
         if (!eat('{'))
             return false;
         while (!eat('}'))
-            recoverErrors(parseStatement, true);
+            must(recoverErrors(parseStatement, true));
         return true;
     }
     function parseTemplateDef() {
@@ -394,6 +394,8 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
         while (true) {
             if (peek('('))
                 parseCall();
+            else if (peek('`'))
+                parseBacktickString(); // template function call
             else if (peek('['))
                 parseIndex();
             else if (eat('++') || eat('--')) { }
