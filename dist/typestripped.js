@@ -221,14 +221,14 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
     function parseImport() {
         // import * as x from 'file';
         // import {a,b as c} from 'file';
+        // import xyz from 'file';
         if (!eat('import'))
             return false;
         if (eat('*')) {
             must(eat('as'));
             must(eat(IDENTIFIER));
         }
-        else {
-            must(eat('{'));
+        else if (eat('{')) {
             while (true) {
                 if (!eat(IDENTIFIER))
                     break;
@@ -238,6 +238,9 @@ export function typestripped(code, { debug, recover, transformImport } = {}) {
                     break;
             }
             must(eat('}'));
+        }
+        else {
+            must(eat(IDENTIFIER));
         }
         must(eat('from'));
         let stringStart = out.length;

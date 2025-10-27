@@ -234,19 +234,21 @@ export function typestripped(code: string, {debug,recover,transformImport}: Opti
     function parseImport() {
         // import * as x from 'file';
         // import {a,b as c} from 'file';
+        // import xyz from 'file';
         if (!eat('import')) return false;
         if (eat('*')) {
             must(eat('as'));
             must(eat(IDENTIFIER));
         }
-        else {
-            must(eat('{'));
+        else if (eat('{')) {
             while(true) {
                 if (!eat(IDENTIFIER)) break;
                 if (eat('as')) must(eat(IDENTIFIER));
                 if (!eat(',')) break;
             }
             must(eat('}'));
+        } else {
+            must(eat(IDENTIFIER));
         }
         must(eat('from'));
         let stringStart = out.length;
@@ -790,8 +792,8 @@ export function typestripped(code: string, {debug,recover,transformImport}: Opti
         return false; // does not happen
     }
     
-    function skip(func: () => string | boolean | undefined);
-    function skip(...whats: (RegExp | string)[]);
+    function skip(func: () => string | boolean | undefined): any;
+    function skip(...whats: (RegExp | string)[]): any;
     function skip(...whats: any[]) {
         skipping++;
         const result = whats.length===1 && typeof whats[0] === 'function' ? whats[0]() : eat(...whats);
@@ -799,8 +801,7 @@ export function typestripped(code: string, {debug,recover,transformImport}: Opti
         return result;
     }
 
-    function peek(...whats: (RegExp | string)[]);
-    function peek(...whats: any[]) {
+    function peek(...whats: (RegExp | string)[]): any {
         peeking++;
         const result = eat(...whats);
         peeking--;

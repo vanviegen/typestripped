@@ -1,6 +1,6 @@
 {
     "name": "typestripped",
-    "version": "0.1.11",
+    "version": "0.1.12",
     "description": "Tiny, dependency-free library that transpiles (most) TypeScript to JavaScript in the browser.",
     "main": "dist-min/typestripped.js",
     "files": [
@@ -25,7 +25,7 @@
     
     "scripts": {
         "build": "rm -rf dist dist-min ; tsc --target es2020 --declaration --sourceMap --outDir dist src/*.ts && mkdir -p dist-min && for f in dist/*.js; do terser --module --mangle module --keep-fnames --source-map -o dist-min/$(basename $f) -- $f; done && cp dist/*.d.ts dist-min",
-        "test": "for a in tests/*.ts ; do echo $a ; ./bin/cli.js \"$a\" --recover --output /dev/stdout 2> /dev/null | diff -u \"${a%.ts}.js\" - || exit 1 ; done && echo OK",
+        "test": "./bin/cli.js tests/test.ts --output /dev/stdout | diff -u tests/test.js - && ./bin/cli.js tests/error.ts --recover --output /dev/stdout 2> /dev/null | diff -u tests/error.js - && echo OK",
         "prepack": "npm run build && npm run test"
     },
     "repository": {

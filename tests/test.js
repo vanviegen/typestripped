@@ -1,3 +1,7 @@
+import A from 'module';
+import {B, C as D} from "module2";
+import * as E from 'module3';
+
 let x         = 3;
 let xx                    
 const y = "str"
@@ -125,3 +129,4 @@ templatedFunc     ();
 test`string ${text          } ${3          }`;
 
 test`string`(text          );
+
